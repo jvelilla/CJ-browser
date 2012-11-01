@@ -71,6 +71,8 @@ feature {NONE} -- Initialization
 			nb.item_tab (cell_info).set_text ("Information")
 			nb.item_tab (text_formatted_body).set_text ("Formatted body")
 			nb.item_tab (text_http_response).set_text ("HTTP response")
+
+			set_title ("Collection-JSON explorer")
 			set_size (600, 500)
 
 			initialize_actions
