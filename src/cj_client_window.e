@@ -74,6 +74,8 @@ feature {NONE} -- Initialization
 			set_size (600, 500)
 
 			initialize_actions
+
+			close_request_actions.extend (agent destroy_and_exit_if_last)
 		end
 
 	initialize_actions
