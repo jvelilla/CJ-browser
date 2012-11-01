@@ -209,7 +209,7 @@ feature {NONE} -- Properties
 		local
 			f: detachable like current_format
 		do
-			if properties.has (a_style) then
+			if properties.has (a_style.as_lower) then
 				f := new_format_from_current
 
 				if attached foreground_color (a_style) as fg then
@@ -235,7 +235,7 @@ feature {NONE} -- Properties
 
 	record_properties (a_name: READABLE_STRING_GENERAL)
 		do
-			previous_properties.extend ([a_name, widget.character_format (widget.caret_position)])
+			previous_properties.extend ([a_name.as_lower, widget.character_format (widget.caret_position)])
 		end
 
 	revert_properties
@@ -262,7 +262,7 @@ feature -- Properties status
 			has_previous_properties: has_previous_properties
 		do
 			if attached previous_properties.item as p then
-				Result := a_name.is_case_insensitive_equal (p.name)
+				Result := a_name.as_string_8.is_case_insensitive_equal (p.name.as_string_8)
 			end
 		end
 
@@ -307,36 +307,36 @@ feature -- Properties
 
 	set_font (a_name: STRING; ft: like font)
 		do
-			properties.force ([foreground_color (a_name), background_color (a_name), ft], a_name)
+			properties.force ([foreground_color (a_name), background_color (a_name), ft], a_name.as_lower)
 		end
 
 	set_foreground_color (a_name: STRING; c: like foreground_color)
 		do
-			properties.force ([c, background_color (a_name), font (a_name)], a_name)
+			properties.force ([c, background_color (a_name), font (a_name)], a_name.as_lower)
 		end
 
 	set_background_color (a_name: STRING; c: like background_color)
 		do
-			properties.force ([foreground_color (a_name), c, font (a_name)], a_name)
+			properties.force ([foreground_color (a_name), c, font (a_name)], a_name.as_lower)
 		end
 
 	foreground_color (a_name: STRING): detachable EV_COLOR
 		do
-			if attached properties.item (a_name) as v then
+			if attached properties.item (a_name.as_lower) as v then
 				Result := v.foreground_color
 			end
 		end
 
 	background_color (a_name: like properties.key_for_iteration): detachable EV_COLOR
 		do
-			if attached properties.item (a_name) as v then
+			if attached properties.item (a_name.as_lower) as v then
 				Result := v.background_color
 			end
 		end
 
 	font (a_name: like properties.key_for_iteration): detachable EV_FONT
 		do
-			if attached properties.item (a_name) as v then
+			if attached properties.item (a_name.as_lower) as v then
 				Result := v.font
 			end
 		end
