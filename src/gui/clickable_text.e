@@ -207,20 +207,25 @@ feature {NONE} -- Properties
 
 	apply_custom_properties (a_style: STRING)
 		local
-			f: like current_format
+			f: detachable like current_format
 		do
-			f := new_format_from_current
-			if attached foreground_color (a_style) as fg then
-				f.set_color (fg)
-			end
-			if attached background_color (a_style) as bg then
-				f.set_background_color (bg)
-			end
-			if attached font (a_style) as ft then
-				f.set_font (ft)
+			if properties.has (a_style) then
+				f := new_format_from_current
+
+				if attached foreground_color (a_style) as fg then
+					f.set_color (fg)
+				end
+				if attached background_color (a_style) as bg then
+					f.set_background_color (bg)
+				end
+				if attached font (a_style) as ft then
+					f.set_font (ft)
+				end
 			end
 			record_properties (a_style)
-			widget.set_current_format (f)
+			if f /= Void then
+				widget.set_current_format (f)
+			end
 		end
 
 	apply_link_properties
@@ -337,6 +342,17 @@ feature -- Properties
 		end
 
 feature {NONE} -- Implementation
+
+	parent_window_of (w: detachable EV_WIDGET): detachable EV_WINDOW
+		do
+			if w /= Void then
+				if attached {like parent_window_of} w as win then
+					Result := win
+				else
+					Result := parent_window_of (w.parent)
+				end
+			end
+		end
 
 	properties: HASH_TABLE [TUPLE [foreground_color, background_color: detachable EV_COLOR; font: detachable EV_FONT], STRING]
 

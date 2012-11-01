@@ -34,7 +34,7 @@ feature {NONE} -- Initialization
 			ft.set_weight ({EV_FONT_CONSTANTS}.Weight_bold)
 			set_font ("name", ft)
 
-			set_foreground_color ("string", create {EV_COLOR}.make_with_8_bit_rgb (0, 90, 0))
+			set_foreground_color ("string", create {EV_COLOR}.make_with_8_bit_rgb (0, 0, 0))
 			create ft
 			ft.set_shape ({EV_FONT_CONSTANTS}.Shape_italic)
 			set_font ("string", ft)
@@ -45,9 +45,40 @@ feature -- Change
 	set_json (j: detachable JSON_VALUE)
 		do
 			wipe_out
+			json := j
 			if j /= Void then
-				j.accept (Current)
+				widget.set_text ("Click to get formatted body ...")
+				widget.focus_in_actions.extend_kamikaze (agent set_text_from_json)
 			end
+		end
+
+	json: detachable JSON_VALUE
+
+	set_text_from_json
+		local
+			win: like parent_window_of
+			p: detachable like {EV_WINDOW}.pointer_style
+		do
+			wipe_out
+			if attached json as j then
+				win := parent_window_of (widget)
+				if win /= Void then
+					p := win.pointer_style
+					win.set_pointer_style (stock_pixmaps.busy_cursor)
+				end
+				j.accept (Current)
+				if win /= Void then
+					if p = Void then
+						p := stock_pixmaps.standard_cursor
+					end
+					win.set_pointer_style (p)
+				end
+			end
+		end
+
+	stock_pixmaps: EV_STOCK_PIXMAPS
+		once
+			create Result
 		end
 
 feature	-- Json
@@ -56,9 +87,9 @@ feature	-- Json
 			-- Create a new instance
 		do
 			create indentation.make_empty
-			indentation_step := "%T"
+			indentation_step := "  "
 
-			object_count_inlining := 1
+			object_count_inlining := 3
 			array_count_inlining := 1
 		end
 
