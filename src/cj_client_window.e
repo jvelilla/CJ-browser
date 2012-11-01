@@ -17,19 +17,11 @@ inherit
 feature {NONE} -- Initialization
 
 	create_interface_objects
-		local
-			ft: EV_FONT
 		do
 			Precursor
 			create field_url
-			create ft
-			ft.set_family ({EV_FONT_CONSTANTS}.Family_sans)
-			ft.set_height (10)
-
 			create text_formatted_body.make
-
 			create text_http_response
-			text_http_response.set_font (ft)
 
 			create button_go.make_with_text ("Go")
 			create cell_info
@@ -132,13 +124,13 @@ feature -- Explore
 					end
 					if attached resp.collection as coll then
 						t.enter_bold
-						t.append_text ("  Version: ")
+						t.append_text ("- Version: ")
 						t.exit_bold
 						t.append_text (coll.version)
 						t.append_new_line
 
 						t.enter_bold
-						t.append_text ("  Href: ")
+						t.append_text ("- Href: ")
 						t.exit_bold
 
 						if coll.href.is_empty then
@@ -168,9 +160,11 @@ feature -- Explore
 								l_items as c
 							loop
 								i := i + 1
-								append_item_line_to (i, c.item, t)
-								t.append_text ("%N")
+--								append_item_line_to (i, c.item, t)
+								append_item_to (i, c.item, t)
+								t.append_new_line
 							end
+							t.append_new_line
 						end
 						if attached coll.queries as l_queries then
 							t.append_custom ("title", "Queries")
@@ -180,30 +174,17 @@ feature -- Explore
 								l_queries as c
 							loop
 								i := i + 1
-								append_query_line_to (i, c.item, t)
-								t.append_text ("%N")
-							end
-
-							t.append_custom ("title", "Queries (details)")
-							t.append_new_line
-							i := 0
-							across
-								l_queries as c
-							loop
-								i := i + 1
 								append_query_to (i, c.item, t)
-								t.append_text ("%N")
+								t.append_new_line
 							end
+							t.append_new_line
 						end
 
-						if attached coll.template as tpl then
+						if attached coll.template as l_template then
 							t.append_custom ("title", "Template")
 							t.append_new_line
-							across
-								tpl.data as d
-							loop
-								append_data_line_to (d.item, t)
-							end
+							append_template_to (0, l_template, t)
+							t.append_new_line
 						end
 
 						if attached coll.error as l_error then
@@ -239,6 +220,8 @@ feature -- Explore
 			t.enter_italic
 			t.append_text (a_error.message)
 			t.exit_italic
+			t.append_new_line
+
 		end
 
 	append_link_line_to (a_index: INTEGER; a_link: CJ_LINK; t: CLICKABLE_TEXT)
@@ -257,7 +240,7 @@ feature -- Explore
 			t.append_text (" - Link #" + a_index.out)
 			t.exit_bold
 			t.append_text (" ")
-			t.append_link (l_title + {STRING_32} " ("+ a_link.href + {STRING_32} ")", a_link.href)
+			t.append_link (l_title + {STRING_32} " ( "+ a_link.href + {STRING_32} " )", a_link.href)
 		end
 
 	append_query_line_to (a_index: INTEGER; a_query: CJ_QUERY; t: CLICKABLE_TEXT)
@@ -276,7 +259,7 @@ feature -- Explore
 			t.append_text (" - Query #" + a_index.out)
 			t.exit_bold
 			t.append_text (" ")
-			t.append_link (l_title + {STRING_32} " ("+ a_query.href + {STRING_32} ")", a_query.href)
+			t.append_link (l_title + {STRING_32} " ( "+ a_query.href + {STRING_32} " )", a_query.href)
 		end
 
 	append_query_to (a_index: INTEGER; a_query: CJ_QUERY; t: CLICKABLE_TEXT)
@@ -296,11 +279,46 @@ feature -- Explore
 					t.append_new_line
 				end
 			end
+			t.append_new_line
+		end
+
+	append_template_to (a_index: INTEGER; a_template: CJ_TEMPLATE; t: CLICKABLE_TEXT)
+		do
+			t.enter_bold
+			t.append_text (" - Template")
+			if a_index > 0 then
+				t.append_text (" #" + a_index.out)
+			end
+			t.exit_bold
+			t.append_new_line
+
+			t.append_new_line
+			if attached a_template.data as l_data then
+				t.enter_bold
+				t.append_text ("%TData")
+				t.exit_bold
+				t.append_new_line
+				across
+					l_data as d
+				loop
+					t.append_text ("%T - ")
+					append_data_line_to (d.item, t)
+					t.append_new_line
+				end
+			end
+			t.append_new_line
 		end
 
 	append_item_line_to (a_index: INTEGER; a_item: CJ_ITEM; t: CLICKABLE_TEXT)
 		do
 			t.append_link (" - Item #" + a_index.out + " " + a_item.href, a_item.href)
+		end
+
+	append_item_to (a_index: INTEGER; a_item: CJ_ITEM; t: CLICKABLE_TEXT)
+		local
+			i: INTEGER
+		do
+			append_item_line_to (a_index, a_item, t)
 			if attached a_item.data as l_data then
 				t.append_text ("%N%T")
 				t.enter_bold
@@ -313,6 +331,21 @@ feature -- Explore
 					append_data_line_to (d.item, t)
 				end
 			end
+			if attached a_item.links as l_links then
+				t.append_text ("%N%T")
+				t.enter_bold
+				t.append_text ("Links")
+				t.exit_bold
+				i := 0
+				across
+					l_links as ln
+				loop
+					t.append_text ("%N%T%T")
+					i := i + 1
+					append_link_line_to (i, ln.item, t)
+				end
+			end
+			t.append_new_line
 		end
 
 	append_data_line_to (a_data: CJ_DATA; t: CLICKABLE_TEXT)

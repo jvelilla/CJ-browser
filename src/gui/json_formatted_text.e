@@ -34,10 +34,10 @@ feature {NONE} -- Initialization
 			ft.set_weight ({EV_FONT_CONSTANTS}.Weight_bold)
 			set_font ("name", ft)
 
-			set_foreground_color ("string", create {EV_COLOR}.make_with_8_bit_rgb (0, 0, 0))
-			create ft
-			ft.set_shape ({EV_FONT_CONSTANTS}.Shape_italic)
-			set_font ("string", ft)
+--			set_foreground_color ("string", create {EV_COLOR}.make_with_8_bit_rgb (0, 0, 0))
+--			create ft
+--			ft.set_shape ({EV_FONT_CONSTANTS}.Shape_italic)
+--			set_font ("string", ft)
 		end
 
 feature -- Change
@@ -89,7 +89,7 @@ feature	-- Json
 			create indentation.make_empty
 			indentation_step := "  "
 
-			object_count_inlining := 3
+			object_count_inlining := 4
 			array_count_inlining := 1
 		end
 
