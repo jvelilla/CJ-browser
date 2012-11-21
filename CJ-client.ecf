@@ -11,11 +11,11 @@
 		</option>
 		<setting name="concurrency" value="thread"/>
 		<library name="base" location="$ISE_LIBRARY/library/base/base.ecf"/>
-		<library name="cj" location="..\CJ\library\cj.ecf"/>
+		<library name="cj" location="lib\CJ\library\cj.ecf"/>
 		<library name="docking" location="$ISE_LIBRARY\library\docking\docking.ecf"/>
-		<library name="encoder" location="..\..\EWF\library\text\encoder\encoder.ecf"/>
-		<library name="http_client" location="..\..\EWF\library\network\http_client\http_client.ecf"/>
-		<library name="json" location="$ISE_LIBRARY/library/json.ecf/json.ecf.ecf"/>
+		<library name="encoder" location="lib\EWF\library\text\encoder\encoder.ecf"/>
+		<library name="http_client" location="lib\EWF\library\network\http_client\http_client.ecf"/>
+		<library name="json" location="$ISE_LIBRARY\contrib\library\text\parser\json\library\json.ecf"/>
 		<library name="thread" location="$ISE_LIBRARY/library/thread/thread.ecf"/>
 		<library name="vision2" location="$ISE_LIBRARY\library\vision2\vision2.ecf"/>
 		<cluster name="src" location="./src" recursive="true"/>
