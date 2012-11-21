@@ -20,10 +20,10 @@ feature {NONE} -- Initialization
 			w: CJ_CLIENT_WINDOW
 			args: ARGUMENTS
 		do
+			default_create
+
 			create w
 			main_window := w
-
-			default_create
 			w.show
 
 			create args
@@ -36,6 +36,6 @@ feature {NONE} -- Initialization
 
 feature {NONE} -- Implementation
 
-	main_window: EV_WINDOW
+	main_window: detachable EV_WINDOW
 
 end

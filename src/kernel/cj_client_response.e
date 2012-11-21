@@ -12,14 +12,17 @@ create
 
 feature {NONE} -- Initialization
 
-	make (h: like http_response; b: like body; cj: like collection)
+	make (a_href: like href; h: like http_response; b: like body; cj: like collection)
 		do
+			href := a_href
 			http_response := h
 			body := b
 			collection := cj
 		end
 
 feature -- Access
+
+	href: STRING_8
 
 	http_response: READABLE_STRING_8
 
@@ -28,6 +31,7 @@ feature -- Access
 	formatted_body: detachable STRING_32
 		local
 			vis: JSON_PRETTY_STRING_VISITOR
+			v: JSON_VALUE
 		do
 			if attached body as j then
 				create Result.make_empty

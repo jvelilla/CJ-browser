@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="ISO-8859-1"?>
 <system xmlns="http://www.eiffel.com/developers/xml/configuration-1-10-0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.eiffel.com/developers/xml/configuration-1-10-0 http://www.eiffel.com/developers/xml/configuration-1-10-0.xsd" name="cj-client" uuid="FCEA5603-8163-4FE6-B57C-81C37BD8DD44">
 	<target name="cj-client">
 		<root class="CJ_CLIENT_APPLICATION" feature="make_and_launch"/>
@@ -12,8 +12,10 @@
 		<setting name="concurrency" value="thread"/>
 		<library name="base" location="$ISE_LIBRARY\library\base\base-safe.ecf"/>
 		<library name="cj" location="..\CJ\library\cj-safe.ecf"/>
-		<library name="http_client" location="..\..\EWF-jocelyn\library\network\http_client\http_client-safe.ecf"/>
-		<library name="json.ecf" location="$ISE_LIBRARY\contrib\library\text\parser\json\library\json-safe.ecf"/>
+		<library name="docking" location="$ISE_LIBRARY\library\docking\docking-safe.ecf"/>
+		<library name="encoder" location="..\..\EWF\library\text\encoder\encoder-safe.ecf"/>
+		<library name="http_client" location="..\..\EWF\library\network\http_client\http_client-safe.ecf"/>
+		<library name="json" location="..\..\EWF\contrib\library\text\parser\json\library\json-safe.ecf"/>
 		<library name="thread" location="$ISE_LIBRARY\library\thread\thread-safe.ecf"/>
 		<library name="vision2" location="$ISE_LIBRARY\library\vision2\vision2-safe.ecf"/>
 		<cluster name="src" location=".\src\" recursive="true"/>

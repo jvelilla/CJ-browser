@@ -22,15 +22,24 @@ feature -- Access
 
 	client: HTTP_CLIENT_SESSION
 
-	get (a_path: READABLE_STRING_8; ctx: detachable HTTP_CLIENT_REQUEST_CONTEXT): CJ_CLIENT_RESPONSE
+	get (a_path: READABLE_STRING_GENERAL; ctx: detachable HTTP_CLIENT_REQUEST_CONTEXT): CJ_CLIENT_RESPONSE
 		local
 			l_http_response: STRING_8
 			j_body: like json
 			l_formatted_body: detachable STRING_8
 			col: detachable CJ_COLLECTION
+			l_ctx: detachable HTTP_CLIENT_REQUEST_CONTEXT
+			l_url: STRING_8
 		do
 			create l_http_response.make_empty
-			if attached client.get (a_path, ctx) as g_response then
+			l_ctx := ctx
+			if l_ctx = Void then
+				create l_ctx.make
+			end
+			l_ctx.add_header ("Accept", "application/vnd.collection+json")
+			l_url := a_path.to_string_8
+			if attached client.get (l_url, l_ctx) as g_response then
+				l_url := g_response.url
 				l_http_response.append ("Status: " + g_response.status.out + "%N")
 				l_http_response.append (g_response.raw_header)
 				if attached g_response.body as l_body then
@@ -44,8 +53,137 @@ feature -- Access
 					l_formatted_body := Void
 				end
 			end
-			create Result.make (l_http_response, j_body, col)
+			create Result.make (l_url, l_http_response, j_body, col)
 		end
+
+	create_with_template (a_path: READABLE_STRING_GENERAL; tpl: CJ_TEMPLATE; ctx: detachable HTTP_CLIENT_REQUEST_CONTEXT): CJ_CLIENT_RESPONSE
+		local
+			l_http_response: STRING_8
+			j_body: like json
+			l_formatted_body: detachable STRING_8
+			col: detachable CJ_COLLECTION
+			d: detachable STRING_8
+			l_ctx: detachable HTTP_CLIENT_REQUEST_CONTEXT
+			l_url: STRING_8
+		do
+			create l_http_response.make_empty
+			l_ctx := ctx
+			if l_ctx = Void then
+				create l_ctx.make
+			end
+			l_ctx.add_header ("Content-Type", "application/vnd.collection+json")
+
+			if attached cj_template_to_json (tpl) as j then
+				d := "{ %"template%": " + j.representation + " }"
+			end
+
+			l_url := a_path.to_string_8
+			if attached client.post (l_url, l_ctx, d) as g_response then
+				l_url := g_response.url
+				l_http_response.append ("Status: " + g_response.status.out + "%N")
+				l_http_response.append (g_response.raw_header)
+				if attached g_response.body as l_body then
+					l_http_response.append ("%N%N")
+					l_http_response.append (l_body)
+					if attached json (l_body) as j then
+						j_body := j
+						col := cj_collection (j)
+					end
+				else
+					l_formatted_body := Void
+				end
+			end
+			create Result.make (l_url, l_http_response, j_body, col)
+		end
+
+	update_with_template (a_path: READABLE_STRING_GENERAL; tpl: CJ_TEMPLATE; ctx: detachable HTTP_CLIENT_REQUEST_CONTEXT): CJ_CLIENT_RESPONSE
+		local
+			l_http_response: STRING_8
+			j_body: like json
+			l_formatted_body: detachable STRING_8
+			col: detachable CJ_COLLECTION
+			d: detachable STRING_8
+			l_ctx: detachable HTTP_CLIENT_REQUEST_CONTEXT
+			l_url: STRING_8
+		do
+			create l_http_response.make_empty
+			l_ctx := ctx
+			if l_ctx = Void then
+				create l_ctx.make
+			end
+			l_ctx.add_header ("Content-Type", "application/vnd.collection+json")
+
+			if attached cj_template_to_json (tpl) as j then
+				d := "{ %"template%": " + j.representation + " }"
+			end
+
+			l_url := a_path.to_string_8
+			if attached client.put (l_url, l_ctx, d) as g_response then
+				l_url := g_response.url
+				l_http_response.append ("Status: " + g_response.status.out + "%N")
+				l_http_response.append (g_response.raw_header)
+				if attached g_response.body as l_body then
+					l_http_response.append ("%N%N")
+					l_http_response.append (l_body)
+					if attached json (l_body) as j then
+						j_body := j
+						col := cj_collection (j)
+					end
+				else
+					l_formatted_body := Void
+				end
+			end
+			create Result.make (l_url, l_http_response, j_body, col)
+		end
+
+	query (q: CJ_QUERY; ctx: detachable HTTP_CLIENT_REQUEST_CONTEXT): CJ_CLIENT_RESPONSE
+		local
+			l_http_response: STRING_8
+			j_body: like json
+			l_formatted_body: detachable STRING_8
+			col: detachable CJ_COLLECTION
+			l_ctx: detachable HTTP_CLIENT_REQUEST_CONTEXT
+			l_url: STRING_8
+		do
+			create l_http_response.make_empty
+			l_ctx := ctx
+			if l_ctx = Void then
+				create l_ctx.make
+			end
+			l_ctx.add_header ("Content-Type", "application/vnd.collection+json")
+
+			if attached q.data as q_data then
+				across
+					q_data as d
+				loop
+					if attached d.item.value as l_val then
+						l_ctx.add_query_parameter (d.item.name, l_val)
+					end
+				end
+			end
+
+--			if attached cj_query_to_json (tpl) as j then
+--				d := "{ %"template%": " + j.representation + " }"
+--			end
+			l_url := q.href
+			if attached client.get (q.href, l_ctx) as g_response then
+				l_url := g_response.url
+				l_http_response.append ("Status: " + g_response.status.out + "%N")
+				l_http_response.append (g_response.raw_header)
+				if attached g_response.body as l_body then
+					l_http_response.append ("%N%N")
+					l_http_response.append (l_body)
+					if attached json (l_body) as j then
+						j_body := j
+						col := cj_collection (j)
+					end
+				else
+					l_formatted_body := Void
+				end
+			end
+			create Result.make (l_url, l_http_response, j_body, col)
+		end
+
 
 feature {NONE} -- Implementation
 
@@ -94,6 +232,15 @@ feature -- Access
 			then
 				Result := v
 			end
+		end
+
+	cj_template_to_json (tpl: CJ_TEMPLATE): detachable JSON_VALUE
+		local
+			conv: CJ_TEMPLATE_JSON_CONVERTER
+		do
+			initialize_json_converters
+			create conv.make
+			Result := conv.to_json (tpl)
 		end
 
 end

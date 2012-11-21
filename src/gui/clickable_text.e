@@ -7,6 +7,9 @@ note
 class
 	CLICKABLE_TEXT
 
+inherit
+	EV_SHARED_APPLICATION
+
 create
 	make
 
@@ -30,7 +33,8 @@ feature {NONE} -- Initialization
 			widget.set_background_color (default_background_color)
 			wipe_out
 
-			widget.pointer_double_press_actions.extend (agent on_double_click)
+--			widget.pointer_double_press_actions.extend (agent on_double_clicked)
+			widget.pointer_button_press_actions.extend (agent on_clicked)
 		end
 
 	initialize
@@ -51,36 +55,64 @@ feature {NONE} -- Internals
 	links: ARRAYED_LIST [TUPLE [left,right: INTEGER; title: detachable READABLE_STRING_GENERAL; location: READABLE_STRING_8]]
 
 	link (pos: like widget.caret_position): detachable like links.item
+		local
+			was_eol: BOOLEAN
+			n: INTEGER
 		do
+			n := widget.line_number_from_position (pos)
+			if pos = widget.last_position_from_line_number (n) then
+				was_eol := True
+			end
 			across
 				links as c
 			until
 				Result /= Void
 			loop
 				if c.item.left <= pos and pos <= c.item.right then
-					Result := c.item
+					if was_eol and pos = c.item.right then
+					else
+						Result := c.item
+					end
 				end
 			end
 		end
 
 feature -- Event
 
-	on_double_click (x: INTEGER; y: INTEGER; button: INTEGER; x_tilt: DOUBLE; y_tilt: DOUBLE; pressure: DOUBLE; screen_x: INTEGER; screen_y: INTEGER)
-		local
-			pos: like widget.caret_position
+--	on_double_clicked (x: INTEGER; y: INTEGER; button: INTEGER; x_tilt: DOUBLE; y_tilt: DOUBLE; pressure: DOUBLE; screen_x: INTEGER; screen_y: INTEGER)
+--		local
+--			pos: like widget.caret_position
+--		do
+--			if button = {EV_POINTER_CONSTANTS}.left then
+--				pos := widget.caret_position
+--				if attached link (pos) as l_link then
+--					on_link_activated (l_link)
+--				end
+--			end
+--		end
+
+	on_clicked (x: INTEGER; y: INTEGER; button: INTEGER; x_tilt: DOUBLE; y_tilt: DOUBLE; pressure: DOUBLE; screen_x: INTEGER; screen_y: INTEGER)
 		do
 			if button = {EV_POINTER_CONSTANTS}.left then
-				pos := widget.caret_position
-				if attached link (pos) as l_link then
-					on_link_double_clicked (l_link)
-				end
+				ev_application.add_idle_action_kamikaze (agent idle_on_clicked)
 			end
 		end
 
-	on_link_double_clicked (a_link: attached like link)
+	idle_on_clicked
+		local
+			pos: like widget.caret_position
+		do
+			pos := widget.caret_position
+			if attached link (pos) as l_link then
+				on_link_activated (l_link)
+			end
+		end
+
+	on_link_activated (a_link: attached like link)
 		do
 			link_activated_actions.call ([a_link.location])
 		end
+
 
 feature -- Actions
 
@@ -143,11 +175,11 @@ feature -- Access
 			revert_properties
 		end
 
-	append_link (t: detachable READABLE_STRING_GENERAL; a_url: READABLE_STRING_8)
+	append_custom_link (a_style: STRING; t: detachable READABLE_STRING_GENERAL; a_url: READABLE_STRING_8)
 		local
 			l_left, l_right: INTEGER
 		do
-			apply_link_properties
+			apply_custom_properties (a_style)
 			l_left := widget.caret_position
 			if t /= Void then
 				append_text (t)
@@ -157,6 +189,11 @@ feature -- Access
 			revert_properties
 			l_right := widget.caret_position
 			links.extend ([l_left, l_right, t, a_url])
+		end
+
+	append_link (t: detachable READABLE_STRING_GENERAL; a_url: READABLE_STRING_8)
+		do
+			append_custom_link ("link", t, a_url)
 		end
 
 feature {NONE} -- Properties
