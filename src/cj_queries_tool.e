@@ -107,8 +107,6 @@ feature -- Change
 	on_query (coll: CJ_COLLECTION; q: CJ_QUERY; table: HASH_TABLE [EV_TEXT_FIELD, STRING_32])
 		local
 			ctx: HTTP_CLIENT_REQUEST_CONTEXT
-			dlg: EV_INFORMATION_DIALOG
-			resp: CJ_CLIENT_RESPONSE
 		do
 			create ctx.make
 			if attached q.data as l_data then

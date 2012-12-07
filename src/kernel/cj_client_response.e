@@ -31,7 +31,6 @@ feature -- Access
 	formatted_body: detachable STRING_32
 		local
 			vis: JSON_PRETTY_STRING_VISITOR
-			v: JSON_VALUE
 		do
 			if attached body as j then
 				create Result.make_empty

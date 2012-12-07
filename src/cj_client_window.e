@@ -69,7 +69,7 @@ feature {NONE} -- Initialization
 
 			create dm.make (vb, Current)
 			docking_manager := dm
-			create f.make_with_name ("layout.db")
+			create f.make ("layout.db")
 			dm.close_editor_place_holder
 			dm.contents.extend (information_tool.sd_content)
 			dm.contents.extend (queries_tool.sd_content)
