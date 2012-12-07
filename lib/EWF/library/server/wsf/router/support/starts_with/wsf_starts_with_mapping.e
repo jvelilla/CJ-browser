@@ -10,6 +10,8 @@ class
 inherit
 	WSF_ROUTER_MAPPING
 
+	WSF_SELF_DOCUMENTED_ROUTER_MAPPING
+
 create
 	make
 
@@ -23,9 +25,19 @@ feature {NONE} -- Initialization
 
 feature -- Access
 
+	associated_resource: READABLE_STRING_8
+			-- Associated resource
+		do
+			Result := uri
+		end
+
 	handler: WSF_STARTS_WITH_HANDLER
 
 	uri: READABLE_STRING_8
+
+feature -- Documentation
+
+	description: STRING_32 = "Starts-With-URI"
 
 feature -- Status
 

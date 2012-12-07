@@ -10,6 +10,8 @@ class
 inherit
 	WSF_ROUTER_MAPPING
 
+	WSF_SELF_DOCUMENTED_ROUTER_MAPPING
+
 create
 	make,
 	make_from_template
@@ -29,9 +31,19 @@ feature {NONE} -- Initialization
 
 feature -- Access		
 
+	associated_resource: READABLE_STRING_8
+			-- Associated resource
+		do
+			Result := template.template
+		end
+
 	handler: WSF_URI_TEMPLATE_HANDLER
 
 	template: URI_TEMPLATE
+
+feature -- Documentation
+
+	description: STRING_32 = "Match-URI-Template"
 
 feature -- Element change
 

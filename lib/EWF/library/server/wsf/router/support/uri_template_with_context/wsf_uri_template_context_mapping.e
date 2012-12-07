@@ -10,7 +10,10 @@ class
 inherit
 	WSF_ROUTER_CONTEXT_MAPPING [C]
 
-	DEBUG_OUTPUT
+	WSF_SELF_DOCUMENTED_ROUTER_MAPPING
+		undefine
+			debug_output
+		end
 
 create
 	make,
@@ -31,17 +34,19 @@ feature {NONE} -- Initialization
 
 feature -- Access		
 
+	associated_resource: READABLE_STRING_8
+			-- Associated resource
+		do
+			Result := template.template
+		end
+
 	handler: WSF_URI_TEMPLATE_CONTEXT_HANDLER [C]
 
 	template: URI_TEMPLATE
 
-feature -- Status report
+feature -- Documentation
 
-	debug_output: STRING
-			-- String that should be displayed in debugger to represent `Current'.
-		do
-			Result := "URI-template: " + template.template
-		end
+	description: STRING_32 = "Match-URI-Template"
 
 feature -- Element change
 
