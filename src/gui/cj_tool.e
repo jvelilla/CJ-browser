@@ -30,7 +30,7 @@ feature {NONE} -- Initialization
 
 feature -- Access
 
-	cj_client: CJ_CLIENT
+	cj_client: CJ_CLIENT_PROXY
 
 	title: STRING_32
 		deferred

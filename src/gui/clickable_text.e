@@ -33,6 +33,15 @@ feature {NONE} -- Initialization
 			widget.set_background_color (default_background_color)
 			wipe_out
 
+			widget.pointer_motion_actions.extend (agent (x: INTEGER; y: INTEGER; x_tilt: DOUBLE; y_tilt: DOUBLE; pressure: DOUBLE; screen_x: INTEGER; screen_y: INTEGER)
+					local
+						pos: INTEGER
+					do
+						pos := widget.index_from_position (x, y)
+--						print (pos); print ("%N")
+						on_pointer_hover (pos)
+					end)
+
 --			widget.pointer_double_press_actions.extend (agent on_double_clicked)
 			widget.pointer_button_press_actions.extend (agent on_clicked)
 		end
@@ -94,15 +103,51 @@ feature -- Event
 	on_clicked (x: INTEGER; y: INTEGER; button: INTEGER; x_tilt: DOUBLE; y_tilt: DOUBLE; pressure: DOUBLE; screen_x: INTEGER; screen_y: INTEGER)
 		do
 			if button = {EV_POINTER_CONSTANTS}.left then
-				ev_application.add_idle_action_kamikaze (agent idle_on_clicked)
+				widget.caret_move_actions.extend_kamikaze (agent on_caret_clicked)
+--				ev_application.add_idle_action_kamikaze (agent idle_on_clicked)
 			end
 		end
 
-	idle_on_clicked
+	on_pointer_hover (pos: INTEGER)
 		local
-			pos: like widget.caret_position
+			l_link: like link
+			fmt: EV_CHARACTER_FORMAT
+			fx: EV_CHARACTER_FORMAT_EFFECTS
+			lnk_info: like last_linked_hovered
 		do
-			pos := widget.caret_position
+			l_link := link (pos)
+			lnk_info := last_linked_hovered
+			if l_link /= Void then
+				if lnk_info = Void or else lnk_info.link /= l_link then
+					fmt := widget.character_format (l_link.left +  (l_link.right - l_link.left) // 2 ) -- take the format of the middle of the link ..
+					last_linked_hovered := [l_link, fmt]
+					fmt := new_format (fmt)
+					fx := fmt.effects
+					fx.enable_underlined
+					fmt.set_effects (fx)
+					widget.format_region (l_link.left, l_link.right, fmt)
+				end
+			end
+			if lnk_info /= Void and then l_link /= lnk_info.link then
+				l_link := lnk_info.link
+				fmt := lnk_info.format
+				fx := fmt.effects
+				fx.disable_underlined
+				fmt.set_effects (fx)
+				widget.format_region (l_link.left, l_link.right, fmt)
+				last_linked_hovered := Void
+			end
+		end
+
+	last_linked_hovered: detachable TUPLE [link: attached like link; format: EV_CHARACTER_FORMAT]
+
+	idle_on_clicked
+		do
+			on_caret_clicked (widget.caret_position)
+		end
+
+	on_caret_clicked (pos: INTEGER)
+		do
 			if attached link (pos) as l_link then
 				on_link_activated (l_link)
 			end

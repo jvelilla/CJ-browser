@@ -14,11 +14,13 @@
 		<library name="cj" location="lib\CJ\library\cj-safe.ecf"/>
 		<library name="docking" location="$ISE_LIBRARY\library\docking\docking-safe.ecf"/>
 		<library name="encoder" location="lib\EWF\library\text\encoder\encoder-safe.ecf"/>
+		<library name="http" location="lib\EWF\library\network\protocol\http\http-safe.ecf" readonly="false"/>
+		<library name="http_authorization" location="lib\EWF\library\server\authentication\http_authorization\http_authorization-safe.ecf" readonly="false"/>
 		<library name="http_client" location="lib\EWF\library\network\http_client\http_client-safe.ecf"/>
 		<library name="json" location="$ISE_LIBRARY\contrib\library\text\parser\json\library\json-safe.ecf"/>
 		<library name="thread" location="$ISE_LIBRARY\library\thread\thread-safe.ecf"/>
 		<library name="vision2" location="$ISE_LIBRARY\library\vision2\vision2-safe.ecf"/>
 		<cluster name="src" location=".\src\" recursive="true"/>
-		<override name="override" location="./override\" recursive="true"/>
+		<override name="override" location=".\override\" recursive="true"/>
 	</target>
 </system>

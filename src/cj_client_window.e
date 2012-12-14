@@ -24,14 +24,17 @@ feature {NONE} -- Initialization
 			create button_go.make_with_text ("Go")
 			create button_settings.make_with_text ("...")
 
-			create cj_client.make ("")
+			create cj_client_proxy.make (create {CJ_CLIENT}.make (""))
 
-			create information_tool.make (cj_client)
-			create queries_tool.make (cj_client)
+			create information_tool.make (cj_client_proxy)
+			create queries_tool.make (cj_client_proxy)
 			queries_tool.on_query_actions.extend (agent explore_query)
-			create template_tool.make (cj_client)
-			create formatted_body_tool.make (cj_client)
-			create http_response_tool.make (cj_client)
+			create template_tool.make (cj_client_proxy)
+			create formatted_body_tool.make (cj_client_proxy)
+			create http_response_tool.make (cj_client_proxy)
+			create header_tool.make (cj_client_proxy)
+
+			cj_client_proxy.context_adaptation_agents.extend (agent updated_context)
 		end
 
 	initialize
@@ -69,17 +72,18 @@ feature {NONE} -- Initialization
 
 			create dm.make (vb, Current)
 			docking_manager := dm
-			create f.make ("layout.db")
+			create f.make_with_name ("layout.db")
 			dm.close_editor_place_holder
 			dm.contents.extend (information_tool.sd_content)
 			dm.contents.extend (queries_tool.sd_content)
 			dm.contents.extend (template_tool.sd_content)
 			dm.contents.extend (formatted_body_tool.sd_content)
 			dm.contents.extend (http_response_tool.sd_content)
+			dm.contents.extend (header_tool.sd_content)
 
 			if
 				f.exists and then f.is_readable and then
-				dm.open_config ("layout.db") -- side effect !!!
+				dm.open_config_with_path (create {PATH}.make_from_string ("layout.db")) -- side effect !!!
 			then
 
 			else
@@ -88,6 +92,7 @@ feature {NONE} -- Initialization
 				http_response_tool.sd_content.set_tab_with (information_tool.sd_content, False)
 				queries_tool.sd_content.set_top ({SD_ENUMERATION}.bottom)
 				template_tool.sd_content.set_relative (queries_tool.sd_content, {SD_ENUMERATION}.left)
+				header_tool.sd_content.set_relative (template_tool.sd_content, {SD_ENUMERATION}.left)
 
 				information_tool.set_focus
 			end
@@ -116,7 +121,7 @@ feature -- Action
 	on_quit
 		do
 			if attached docking_manager as dm then
-				if dm.save_data ("layout.db") then
+				if dm.save_data_with_path (create {PATH}.make_from_string ("layout.db")) then
 				else
 					-- .. too bad
 				end
@@ -162,7 +167,7 @@ feature -- Action
 
 feature -- Access
 
-	cj_client: CJ_CLIENT
+	cj_client_proxy: CJ_CLIENT_PROXY
 
 	last_collection: detachable CJ_COLLECTION
 
@@ -182,7 +187,7 @@ feature -- Explore
 				set_field_url_from_location (q.href)
 				set_pointer_style (stock_pixmaps.Busy_cursor)
 				if
-					attached cj_client.query (q, Void) as resp
+					attached cj_client_proxy.query (q, Void) as resp
 				then
 					set_response (resp)
 				end
@@ -191,6 +196,26 @@ feature -- Explore
 		rescue
 			retried := True
 			retry
+		end
+
+	updated_context (a_ctx: detachable HTTP_CLIENT_REQUEST_CONTEXT): detachable HTTP_CLIENT_REQUEST_CONTEXT
+		local
+			ctx: detachable HTTP_CLIENT_REQUEST_CONTEXT
+		do
+			ctx := a_ctx
+			if attached header_tool as htool and then attached htool.header as h then
+				if not h.is_empty then
+					if ctx = Void then
+						create ctx.make
+						across
+							h.to_name_value_iterable as c
+						loop
+							ctx.add_header (c.item.name, c.item.value)
+						end
+					end
+				end
+			end
+			Result := ctx
 		end
 
 	explore (a_url: READABLE_STRING_GENERAL)
@@ -203,7 +228,7 @@ feature -- Explore
 				set_pointer_style (stock_pixmaps.Busy_cursor)
 
 				if
-					attached cj_client.get (a_url, Void) as resp
+					attached cj_client_proxy.get (a_url, Void) as resp
 				then
 					set_response (resp)
 				end
@@ -380,20 +405,20 @@ feature -- Explore
 			end
 		end
 
-	launch_url (a_location: READABLE_STRING_8)
+	launch_url (a_location: READABLE_STRING_GENERAL)
 		local
 			e: EXECUTION_ENVIRONMENT
-			cmd: STRING
+			cmd: STRING_32
 		do
 			create e
 			if {PLATFORM}.is_windows then
 				create cmd.make_empty
-				if attached e.get ("ComSpec") as l_comspec then
+				if attached e.item ("ComSpec") as l_comspec then
 					cmd.append (l_comspec)
-					cmd.append (" /c ")
+					cmd.append_string_general (" /c ")
 				end
-				cmd.append ("start ")
-				cmd.append (a_location)
+				cmd.append_string_general ("start ")
+				cmd.append_string_general (a_location)
 				e.launch (cmd)
 			end
 		end
@@ -588,6 +613,7 @@ feature -- Tools
 	formatted_body_tool: CJ_FORMATTED_BODY_TOOL
 
 	http_response_tool: CJ_HTTP_RESPONSE_TOOL
+	header_tool: CJ_HEADER_TOOL
 
 feature -- Widget
 
