@@ -59,4 +59,10 @@ feature -- Execution
 			Result := client.update_with_template (a_path, tpl, adapted_context (ctx))
 		end
 
+
+	delete (a_path: READABLE_STRING_GENERAL; ctx: detachable HTTP_CLIENT_REQUEST_CONTEXT): CJ_CLIENT_RESPONSE
+		do
+			Result := client.delete (a_path, adapted_context (ctx))
+		end
+
 end

@@ -185,6 +185,41 @@ feature -- Access
 		end
 
 
+	delete (a_path: READABLE_STRING_GENERAL; ctx: detachable HTTP_CLIENT_REQUEST_CONTEXT): CJ_CLIENT_RESPONSE
+		local
+			l_http_response: STRING_8
+			j_body: like json
+			l_formatted_body: detachable STRING_8
+			col: detachable CJ_COLLECTION
+			l_ctx: detachable HTTP_CLIENT_REQUEST_CONTEXT
+			l_url: STRING_8
+		do
+			create l_http_response.make_empty
+			l_ctx := ctx
+			if l_ctx = Void then
+				create l_ctx.make
+			end
+			l_ctx.add_header ("Accept", "application/vnd.collection+json")
+			l_url := a_path.to_string_8
+			if attached client.delete (l_url, l_ctx) as g_response then
+				l_url := g_response.url
+				l_http_response.append ("Status: " + g_response.status.out + "%N")
+				l_http_response.append (g_response.raw_header)
+				if attached g_response.body as l_body then
+					l_http_response.append ("%N%N")
+					l_http_response.append (l_body)
+					if attached json (l_body) as j then
+						j_body := j
+						col := cj_collection (j)
+					end
+				else
+					l_formatted_body := Void
+				end
+			end
+			create Result.make (l_url, l_http_response, j_body, col)
+		end
+
+
 feature {NONE} -- Implementation
 
 	shared_ejson: SHARED_EJSON
