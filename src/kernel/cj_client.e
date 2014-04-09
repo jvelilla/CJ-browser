@@ -16,6 +16,7 @@ feature {NONE} -- Initialization
 			-- Initialize `Current'.
 		do
 			create {LIBCURL_HTTP_CLIENT_SESSION} client.make (a_service) --"http://jfiat.dyndns.org:8190")
+			client.set_timeout (25)
 		end
 
 feature -- Access		
@@ -71,6 +72,7 @@ feature -- Access
 			if l_ctx = Void then
 				create l_ctx.make
 			end
+			l_ctx.add_header ("Accept", "application/vnd.collection+json")
 			l_ctx.add_header ("Content-Type", "application/vnd.collection+json")
 
 			if attached cj_template_to_json (tpl) as j then
@@ -112,6 +114,8 @@ feature -- Access
 				create l_ctx.make
 			end
 			l_ctx.add_header ("Content-Type", "application/vnd.collection+json")
+			l_ctx.add_header ("Accept", "application/vnd.collection+json")
+				
 
 			if attached cj_template_to_json (tpl) as j then
 				d := "{ %"template%": " + j.representation + " }"
@@ -151,6 +155,8 @@ feature -- Access
 				create l_ctx.make
 			end
 			l_ctx.add_header ("Content-Type", "application/vnd.collection+json")
+			l_ctx.add_header ("Accept", "application/vnd.collection+json")
+
 
 			if attached q.data as q_data then
 				across
