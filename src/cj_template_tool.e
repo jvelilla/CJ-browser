@@ -43,10 +43,12 @@ feature -- Change
 			v: EV_VERTICAL_BOX
 			hb: EV_HORIZONTAL_BOX
 			lab: EV_LABEL
-			tf: EV_TEXT_FIELD
+--			tf: EV_TEXT_FIELD
+			tf: EV_TEXT
 			tf_passwd: EV_PASSWORD_FIELD
 			but: EV_BUTTON
-			table: HASH_TABLE [EV_TEXT_FIELD, STRING_32]
+			but_delete: detachable EV_BUTTON
+			table: HASH_TABLE [EV_TEXT_COMPONENT, STRING_32]
 			is_creation: BOOLEAN
 			is_password: BOOLEAN
 		do
@@ -110,15 +112,23 @@ feature -- Change
 			else
 				create but.make_with_text ("Update")
 				but.select_actions.extend (agent on_post (coll, tpl, table, False))
+				create but_delete.make_with_text ("Delete")
+				but_delete.select_actions.extend (agent on_delete (coll, tpl, table))
+
 			end
 
 			v.extend (create {EV_CELL})
 			v.extend (but)
+			if but_delete /= Void then
+				v.extend (but_delete)
+				v.disable_item_expand (but_delete)
+
+			end
 			v.disable_item_expand (but)
 			-- FIXME
 		end
 
-	on_post (coll: CJ_COLLECTION; tpl: CJ_TEMPLATE; table: HASH_TABLE [EV_TEXT_FIELD, STRING_32]; is_creation: BOOLEAN)
+	on_post (coll: CJ_COLLECTION; tpl: CJ_TEMPLATE; table: HASH_TABLE [EV_TEXT_COMPONENT, STRING_32]; is_creation: BOOLEAN)
 		local
 			ctx: HTTP_CLIENT_REQUEST_CONTEXT
 			l_href: STRING_8
@@ -145,6 +155,33 @@ feature -- Change
 			dlg.set_text (resp.http_response)
 			dlg.show
 --			dlg.focus_out_actions.extend (agent dlg.destroy_and_exit_if_last)
+		end
+
+	on_delete (coll: CJ_COLLECTION; tpl: CJ_TEMPLATE; table: HASH_TABLE [EV_TEXT_COMPONENT, STRING_32])
+		local
+			ctx: HTTP_CLIENT_REQUEST_CONTEXT
+			l_href: STRING_8
+			dlg: EV_INFORMATION_DIALOG
+			resp: CJ_CLIENT_RESPONSE
+		do
+			create ctx.make
+			across
+				tpl.data as c
+			loop
+				if attached table.item (c.item.name) as tf then
+					c.item.set_value (tf.text)
+				end
+			end
+			if attached coll.items as l_items and then attached l_items.first as first_item then
+				l_href := first_item.href
+				resp := cj_client.delete(l_href, Void )
+			else
+				l_href := coll.href
+				resp := cj_client.delete (l_href, Void)
+			end
+			create dlg.make_with_text ("Result")
+			dlg.set_text (resp.http_response)
+			dlg.show
 		end
 
 invariant

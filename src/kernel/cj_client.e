@@ -16,6 +16,7 @@ feature {NONE} -- Initialization
 			-- Initialize `Current'.
 		do
 			create {LIBCURL_HTTP_CLIENT_SESSION} client.make (a_service) --"http://jfiat.dyndns.org:8190")
+			client.set_timeout (25)
 		end
 
 feature -- Access		
@@ -71,6 +72,7 @@ feature -- Access
 			if l_ctx = Void then
 				create l_ctx.make
 			end
+			l_ctx.add_header ("Accept", "application/vnd.collection+json")
 			l_ctx.add_header ("Content-Type", "application/vnd.collection+json")
 
 			if attached cj_template_to_json (tpl) as j then
@@ -112,6 +114,8 @@ feature -- Access
 				create l_ctx.make
 			end
 			l_ctx.add_header ("Content-Type", "application/vnd.collection+json")
+			l_ctx.add_header ("Accept", "application/vnd.collection+json")
+				
 
 			if attached cj_template_to_json (tpl) as j then
 				d := "{ %"template%": " + j.representation + " }"
@@ -151,6 +155,8 @@ feature -- Access
 				create l_ctx.make
 			end
 			l_ctx.add_header ("Content-Type", "application/vnd.collection+json")
+			l_ctx.add_header ("Accept", "application/vnd.collection+json")
+
 
 			if attached q.data as q_data then
 				across
@@ -167,6 +173,41 @@ feature -- Access
 --			end
 			l_url := q.href
 			if attached client.get (q.href, l_ctx) as g_response then
+				l_url := g_response.url
+				l_http_response.append ("Status: " + g_response.status.out + "%N")
+				l_http_response.append (g_response.raw_header)
+				if attached g_response.body as l_body then
+					l_http_response.append ("%N%N")
+					l_http_response.append (l_body)
+					if attached json (l_body) as j then
+						j_body := j
+						col := cj_collection (j)
+					end
+				else
+					l_formatted_body := Void
+				end
+			end
+			create Result.make (l_url, l_http_response, j_body, col)
+		end
+
+
+	delete (a_path: READABLE_STRING_GENERAL; ctx: detachable HTTP_CLIENT_REQUEST_CONTEXT): CJ_CLIENT_RESPONSE
+		local
+			l_http_response: STRING_8
+			j_body: like json
+			l_formatted_body: detachable STRING_8
+			col: detachable CJ_COLLECTION
+			l_ctx: detachable HTTP_CLIENT_REQUEST_CONTEXT
+			l_url: STRING_8
+		do
+			create l_http_response.make_empty
+			l_ctx := ctx
+			if l_ctx = Void then
+				create l_ctx.make
+			end
+			l_ctx.add_header ("Accept", "application/vnd.collection+json")
+			l_url := a_path.to_string_8
+			if attached client.delete (l_url, l_ctx) as g_response then
 				l_url := g_response.url
 				l_http_response.append ("Status: " + g_response.status.out + "%N")
 				l_http_response.append (g_response.raw_header)
