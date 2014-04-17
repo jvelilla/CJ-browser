@@ -1,0 +1,14 @@
+{ "collection" :
+  {
+    "version" : "1.0",
+    "href" : "http://example.org/friends/",
+
+	  "template" : {
+	    "data" : [
+	      {"name" : "full-name", "value" : ""},
+	      {"name" : "email", "value" : ""},
+	      {"name" : "status", "acceptableValues" : [{"name":"1", "value":"Open"},{"name":"2", "value":"Close"},{"name":"3", "value":"Pending"},{"name":"4", "value":"Won't Fix"}] ,"value":""}
+	    ]
+	  }
+	}
+}

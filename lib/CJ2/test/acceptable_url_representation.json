@@ -1,0 +1,14 @@
+{ "collection" :
+  {
+    "version" : "1.0",
+    "href" : "http://example.org/friends/",
+
+	  "template" : {
+	    "data" : [
+	      {"name" : "full-name", "value" : ""},
+	      {"name" : "email", "value" : ""},
+	      {"name" : "status", "acceptableValues" : "http://localhost:9090/status","value":""}
+	    ]
+	  }
+	}
+}

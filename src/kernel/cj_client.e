@@ -115,7 +115,7 @@ feature -- Access
 			end
 			l_ctx.add_header ("Content-Type", "application/vnd.collection+json")
 			l_ctx.add_header ("Accept", "application/vnd.collection+json")
-				
+
 
 			if attached cj_template_to_json (tpl) as j then
 				d := "{ %"template%": " + j.representation + " }"

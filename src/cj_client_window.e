@@ -413,7 +413,7 @@ feature -- Explore
 			create e
 			if {PLATFORM}.is_windows then
 				create cmd.make_empty
-				if attached e.get ("ComSpec") as l_comspec then
+				if attached e.item ("ComSpec") as l_comspec then
 					cmd.append (l_comspec)
 					cmd.append_string_general (" /c ")
 				end

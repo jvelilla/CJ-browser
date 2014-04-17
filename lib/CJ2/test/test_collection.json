@@ -1,0 +1,78 @@
+{
+	"collection": {
+		"version": "1.0", 
+		"href": "http://example.org/friends/", 
+		"links": [
+			{"href": "http://example.org/friends/rss", "rel": "feed"}
+		], 
+		"items": [
+			{
+				"href": "http://example.org/friends/jdoe", 
+				"data": [
+					{"name": "full-name", "prompt": "Full Name", "value": "J. Doe"}, 
+					{"name": "email", "prompt": "Email", "value": "jdoe@example.org"}
+				], 
+				"links": [
+					{"href": "http://examples.org/blogs/jdoe", "rel": "blog", "prompt": "Blog"}, 
+					{
+						"href": "http://examples.org/images/jdoe", 
+						"rel": "avatar", 
+						"prompt": "Avatar", 
+						"render": "image"
+					}
+				]
+			}, 
+			{
+				"href": "http://example.org/friends/msmith", 
+				"data": [
+					{"name": "full-name", "prompt": "Full Name", "value": "M. Smith"}, 
+					{"name": "email", "prompt": "Email", "value": "msmith@example.org"}
+				], 
+				"links": [
+					{"href": "http://examples.org/blogs/msmith", "rel": "blog", "prompt": "Blog"}, 
+					{
+						"href": "http://examples.org/images/msmith", 
+						"rel": "avatar", 
+						"prompt": "Avatar", 
+						"render": "image"
+					}
+				]
+			}, 
+			{
+				"href": "http://example.org/friends/rwilliams", 
+				"data": [
+					{"name": "full-name", "prompt": "Full Name", "value": "R. Williams"}, 
+					{"name": "email", "prompt": "Email", "value": "rwilliams@example.org"}
+				], 
+				"links": [
+					{"href": "http://examples.org/blogs/rwilliams", "rel": "blog", "prompt": "Blog"}, 
+					{
+						"href": "http://examples.org/images/rwilliams", 
+						"rel": "avatar", 
+						"prompt": "Avatar", 
+						"render": "image"
+					}
+				]
+			}
+		], 
+		"queries": [
+			{
+				"href": "http://example.org/friends/search", 
+				"rel": "search", 
+				"prompt": "Search", 
+				"data": [
+					{"name": "search", "prompt": "", "value": ""}
+				]
+			}
+		], 
+		"template": {
+			"data": [
+				{"name": "full-name", "prompt": "Full Name", "value": ""}, 
+				{"name": "email", "prompt": "Email", "value": ""}, 
+				{"name": "blog", "prompt": "Blog", "value": ""}, 
+				{"name": "avatar", "prompt": "Avatar", "value": ""}
+			]
+		}, 
+		"error": {"title": "Server Error", "code": "X1C2", "message": "The server have encountered an error, please wait and try again."}
+	}
+}
