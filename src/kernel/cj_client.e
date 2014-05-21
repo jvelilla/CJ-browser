@@ -16,7 +16,9 @@ feature {NONE} -- Initialization
 			-- Initialize `Current'.
 		do
 			create {LIBCURL_HTTP_CLIENT_SESSION} client.make (a_service) --"http://jfiat.dyndns.org:8190")
-			client.set_timeout (25)
+			client.set_timeout (250)
+			client.set_is_insecure (True)
+			client.set_any_auth_type
 		end
 
 feature -- Access		
