@@ -20,10 +20,12 @@ note
 			 "queries": [ARRAY],
 			 "template": {OBJECT},
 			 "error": {OBJECT}
+			 "meta": {OBJECT} 
 			}
 		}
 	]"
 	EIS: "name=Collection+JSON - Hypermedia Type", "protocol=URI", "src=http://www.amundsen.com/media-types/collection/", "tag=homepage, specification"
+	EIS: "name=Collection+JSON - Metadata extension", "protocol=URI", "src=https://github.com/mustmodify/collection-json.rb#meta", "tag=Extension, specification"
 
 class
 	CJ_COLLECTION
@@ -86,6 +88,9 @@ feature -- Access
 	error: detachable CJ_ERROR
 			-- may have an error object
 
+	meta: detachable STRING_TABLE[READABLE_STRING_32]
+			-- meta-data that doesn't belong in an item, is not a link, etc.		
+
 feature -- Element Change
 
 	set_version (a_version: STRING)
@@ -138,6 +143,18 @@ feature -- Element Change
 			l_queries.force (a_query)
 		end
 
+	add_meta (a_key: READABLE_STRING_32; a_value: READABLE_STRING_32)
+		local
+			l_meta: like meta
+		do
+			l_meta := meta
+			if l_meta = Void then
+				create l_meta.make (2)
+				meta := l_meta
+			end
+			l_meta.force (a_value, a_key)
+		end
+
 	set_template (a_template: CJ_TEMPLATE)
 		do
 			template := a_template
@@ -153,6 +170,6 @@ feature -- Constants
 	default_version: STRING = "1.0"
 
 note
-	copyright: "2011-2012, Javier Velilla, Jocelyn Fiat and others"
+	copyright: "2011-2014, Javier Velilla, Jocelyn Fiat and others"
 	license: "Eiffel Forum License v2 (see http://www.eiffel.com/licensing/forum.txt)"
 end

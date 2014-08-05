@@ -73,10 +73,16 @@ feature -- Conversion
 						end
 						Result.set_acceptable_map (l_map)
 					end
-
 				end
-
-
+			end
+			if attached {JSON_ARRAY} j.item (array_key) as l_array then
+				across l_array as c  loop
+					if attached {JSON_STRING} c.item as jo  then
+						Result.add_element_to_array (jo.item)
+					end
+				end
+			end
+			if attached {JSON_VALUE} j.item (accepted_values_key) as l_accepted then
 			end
 			--|TODO improve this code
 			--|is there a better way to write this?
@@ -104,7 +110,12 @@ feature -- Conversion
 			elseif attached o.acceptable_map as o_map then
 				Result.put (to_json_acceptable_map (o_map), accepted_values_key)
 			end
-
+			if attached o.array as l_array then
+				Result.put (to_json_array (l_array), array_key)
+			end
+			if attached o.object as l_object then
+				Result.put (to_json_object (l_object), object_key)
+			end
 		end
 
 	to_json_attachments (a_files: STRING_TABLE[STRING]): JSON_ARRAY
@@ -125,7 +136,6 @@ feature -- Conversion
 			end
 		end
 
-
 	to_json_acceptable_list (a_list: LIST[READABLE_STRING_32]): JSON_ARRAY
 		do
 			from
@@ -138,7 +148,6 @@ feature -- Conversion
 				a_list.forth
 			end
 		end
-
 
 	to_json_acceptable_map (a_map: STRING_TABLE[READABLE_STRING_32]): JSON_ARRAY
 		local
@@ -159,6 +168,26 @@ feature -- Conversion
 		end
 
 
+	to_json_object (a_object: TUPLE[key: READABLE_STRING_32; value: READABLE_STRING_32]): JSON_OBJECT
+		do
+			create Result.make
+			Result.put (create {JSON_STRING}.make_json (a_object.key), create {JSON_STRING}.make_json ("name"))
+			Result.put (create {JSON_STRING}.make_json (a_object.value), create {JSON_STRING}.make_json ("value"))
+		end
+
+
+	to_json_array (a_list: LIST[READABLE_STRING_32]): JSON_ARRAY
+		do
+			from
+				a_list.start
+				create Result.make_array
+			until
+				a_list.after
+			loop
+				Result.add (create {JSON_STRING}.make_json (a_list.item_for_iteration.as_string_32))
+				a_list.forth
+			end
+		end
 
 feature {NONE} -- Implementation
 
@@ -187,6 +216,15 @@ feature {NONE} -- Implementation
 			create Result.make_json ("acceptableValues")
 		end
 
+	array_key: JSON_STRING
+		once
+			create Result.make_json ("array")
+		end
+
+	object_key: JSON_STRING
+		once
+			create Result.make_json ("object")
+		end
 
 note
 	copyright: "2011-2014, Javier Velilla, Jocelyn Fiat and others"

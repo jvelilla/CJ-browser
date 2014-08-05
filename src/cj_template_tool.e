@@ -35,6 +35,8 @@ feature -- Primitives
 
 	list:  detachable EV_CHECKABLE_LIST
 
+	acceptable_list: detachable EV_COMBO_BOX
+
 	v: EV_VERTICAL_BOX
 
 feature -- Change
@@ -58,11 +60,11 @@ feature -- Change
 			is_creation: BOOLEAN
 			is_password: BOOLEAN
 			l_file_dialog: EV_FILE_OPEN_DIALOG
-			l_list: like list
 			l_item: EV_LIST_ITEM
 		do
 			create v
 			list := Void
+			acceptable_list := Void
 			v.set_border_width (3)
 			v.set_padding_width (5)
 			create table.make (tpl.data.count)
@@ -72,40 +74,19 @@ feature -- Change
 			loop
 				create lab.make_with_text (d.item.name)
 				if attached d.item.files as l_files then
-					l_list := list
-					if l_list = Void then
-						create l_list
-						list := l_list
-						l_list.enable_multiple_selection
-						create hb
-						hb.set_padding_width (6)
-						hb.extend (l_list)
-						v.extend (hb)
-						v.disable_item_expand (hb)
+					set_template_attachment (coll, tpl, l_files, table)
+				elseif attached d.item.acceptable_map as l_map then
+					if attached d.item.prompt as p then
+					   lab.set_text (p)
 					end
-					from
-						l_files.start
-					until
-						l_files.after
-					loop
-						create l_item.make_with_text (l_files.key_for_iteration)
-						l_item.set_tooltip (l_files.key_for_iteration)
-						l_list.force (l_item)
-						l_list.check_item (l_item)
-						l_files.forth
-					end
-					create hb
-					hb.set_padding_width (6)
-					create but_add_file.make_with_text ("Add File")
-					but_add_file.select_actions.extend (agent on_add_file (coll, tpl, table))
-					hb.extend (but_add_file)
-					hb.disable_item_expand (but_add_file)
-					v.extend (hb)
-					v.disable_item_expand (hb)
+					set_template_acceptable_map (l_map, lab)
 				else
 					if attached d.item.prompt as p then
 						lab.set_text (p)
-						if p.is_case_insensitive_equal ("Password") then
+						if
+							p.is_case_insensitive_equal ("Password") or else
+							p.has_substring ("Password")
+						then
 							is_password := True
 						else
 							is_password := False
@@ -190,6 +171,22 @@ feature -- Change
 					if attached list as l_list and then not l_list.checked_items.is_empty then
 						across l_list.checked_items as lc loop
 							c.item.add_attachment (lc.item.tooltip, file_content (lc.item.text))
+						end
+					end
+				end
+				if attached c.item.acceptable_map as l_map then
+					if attached acceptable_list as ll_list then
+						if attached ll_list.selected_item as l_item then
+							from
+								l_map.start
+							until
+								l_map.after
+							loop
+								if l_item.text.is_case_insensitive_equal_general (l_map.item_for_iteration) then
+									c.item.set_value (l_map.key_for_iteration.as_string_32)
+								end
+								l_map.forth
+							end
 						end
 					end
 				end
@@ -293,6 +290,78 @@ feature -- Change
 		rescue
 			retried := True
 			retry
+		end
+
+feature -- Template Helpers
+
+	set_template_attachment (coll: CJ_COLLECTION; tpl: CJ_TEMPLATE; a_files: STRING_TABLE[STRING]; a_table: HASH_TABLE [EV_TEXT_COMPONENT, STRING_32])
+		local
+			l_list: like list
+			hb: EV_HORIZONTAL_BOX
+			l_item: EV_LIST_ITEM
+			but_add_file: EV_BUTTON
+		do
+			l_list := list
+			if l_list = Void then
+				create l_list
+				list := l_list
+				l_list.enable_multiple_selection
+				create hb
+				hb.set_padding_width (6)
+				hb.extend (l_list)
+				v.extend (hb)
+				v.disable_item_expand (hb)
+			end
+			from
+				a_files.start
+			until
+				a_files.after
+			loop
+				create l_item.make_with_text (a_files.key_for_iteration)
+				l_item.set_tooltip (a_files.key_for_iteration)
+				l_list.force (l_item)
+				l_list.check_item (l_item)
+				a_files.forth
+			end
+			create hb
+			hb.set_padding_width (6)
+			create but_add_file.make_with_text ("Add File")
+			but_add_file.select_actions.extend (agent on_add_file (coll, tpl, a_table))
+			hb.extend (but_add_file)
+			hb.disable_item_expand (but_add_file)
+			v.extend (hb)
+			v.disable_item_expand (hb)
+		end
+
+	set_template_acceptable_map (a_map: STRING_TABLE[READABLE_STRING_32]; a_lab: EV_LABEL)
+		local
+			l_acceptable_list: like acceptable_list
+			hb: EV_HORIZONTAL_BOX
+			l_item: EV_LIST_ITEM
+		do
+			l_acceptable_list := acceptable_list
+			if l_acceptable_list = Void then
+				create l_acceptable_list
+				acceptable_list := l_acceptable_list
+				create hb
+				hb.extend (a_lab)
+				hb.disable_item_expand (a_lab)
+				hb.set_padding_width (3)
+				hb.extend (l_acceptable_list)
+				v.extend (hb)
+				v.disable_item_expand (hb)
+			end
+
+			from
+				a_map.start
+			until
+				a_map.after
+			loop
+				create l_item.make_with_text (a_map.item_for_iteration)
+				l_item.set_tooltip (a_map.item_for_iteration)
+				l_acceptable_list.force (l_item)
+				a_map.forth
+			end
 		end
 
 invariant

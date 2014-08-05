@@ -316,6 +316,24 @@ feature -- Explore
 						t.append_new_line
 					end
 
+					if
+						attached coll.meta as l_meta and then
+					  	not l_meta.is_empty
+					then
+							t.append_custom ("title", "Metadata")
+							t.append_new_line
+							from
+								l_meta.start
+							until
+								l_meta.after
+							loop
+								t.append_text ("-" + l_meta.key_for_iteration + " #")
+								t.append_text (":" + l_meta.item_for_iteration )
+								t.append_new_line
+								l_meta.forth
+							end
+					end
+
 					if attached coll.items as l_items then
 						t.append_custom ("title", "Items")
 						t.append_new_line

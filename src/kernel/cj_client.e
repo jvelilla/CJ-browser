@@ -150,6 +150,7 @@ feature -- Access
 			col: detachable CJ_COLLECTION
 			l_ctx: detachable HTTP_CLIENT_REQUEST_CONTEXT
 			l_url: STRING_8
+			l_multy: STRING_32
 		do
 			create l_http_response.make_empty
 			l_ctx := ctx
@@ -166,6 +167,21 @@ feature -- Access
 				loop
 					if attached d.item.value as l_val then
 						l_ctx.add_query_parameter (d.item.name, l_val)
+					elseif attached d.item.array as l_array then
+								l_multy := ""
+								from
+									l_array.start
+									l_multy.append (l_array.item)
+									l_array.forth
+								until
+									l_array.after
+								loop
+									l_multy.append_string ("&")
+									l_multy.append_string (d.item.name + "=")
+									l_multy.append_string (l_array.item)
+									l_array.forth
+								end
+							l_ctx.add_query_parameter (d.item.name, l_multy)
 					end
 				end
 			end

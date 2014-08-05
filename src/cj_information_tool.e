@@ -1,6 +1,5 @@
 note
 	description: "Summary description for {CJ_INFORMATION_TOOL}."
-	author: ""
 	date: "$Date$"
 	revision: "$Revision$"
 

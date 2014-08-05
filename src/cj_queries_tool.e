@@ -48,7 +48,7 @@ feature -- Change
 			lab: EV_LABEL
 			tf: EV_TEXT_FIELD
 			but: EV_BUTTON
-			table: HASH_TABLE [EV_TEXT_FIELD, STRING_32]
+			table: HASH_TABLE [EV_ANY, STRING_32]
 			f: EV_FRAME
 			q: CJ_QUERY
 			l_title: STRING_32
@@ -77,19 +77,49 @@ feature -- Change
 					across
 						l_data as d
 					loop
-						create hb
-						hb.set_padding_width (3)
-						create lab.make_with_text (d.item.name)
-						if attached d.item.prompt as p then
-							lab.set_text (p)
+						if attached d.item.acceptable_map as l_map then
+
+							create lab.make_with_text (d.item.name)
+							if attached d.item.prompt as p then
+								lab.set_text (p)
+							end
+
+								-- Multivalue
+							if attached d.item.array as l_array then
+								set_template_acceptable_map_multi (l_map, lab, v, table, l_array)
+								d.item.reset_array
+							elseif attached d.item.value as l_value then
+								set_template_acceptable_map (l_map, lab, v, table, l_value)
+							end
+
+						elseif attached d.item.acceptable_list as l_list then
+							create lab.make_with_text (d.item.name)
+							if attached d.item.prompt as p then
+								lab.set_text (p)
+							end
+							if attached d.item.value as l_value then
+								set_template_acceptable_list (l_list, lab, v, table, l_value)
+							end
+
+
+						else
+							create hb
+							hb.set_padding_width (3)
+							create lab.make_with_text (d.item.name)
+							if attached d.item.prompt as p then
+								lab.set_text (p)
+							end
+							create tf
+							if attached d.item.value as l then
+								tf.set_text (l)
+							end
+							hb.extend (lab)
+							hb.disable_item_expand (lab)
+							hb.extend (tf)
+							v.extend (hb)
+							v.disable_item_expand (hb)
+							table.force (tf, d.item.name)
 						end
-						create tf
-						hb.extend (lab)
-						hb.disable_item_expand (lab)
-						hb.extend (tf)
-						v.extend (hb)
-						v.disable_item_expand (hb)
-						table.force (tf, d.item.name)
 					end
 				else
 					create table.make (0)
@@ -104,7 +134,7 @@ feature -- Change
 			widget.replace (main)
 		end
 
-	on_query (coll: CJ_COLLECTION; q: CJ_QUERY; table: HASH_TABLE [EV_TEXT_FIELD, STRING_32])
+	on_query (coll: CJ_COLLECTION; q: CJ_QUERY; table: HASH_TABLE [EV_ANY, STRING_32])
 		local
 			ctx: HTTP_CLIENT_REQUEST_CONTEXT
 		do
@@ -113,13 +143,139 @@ feature -- Change
 				across
 					l_data as c
 				loop
-					if attached table.item (c.item.name) as tf then
+					if
+						attached {EV_CHECKABLE_LIST} table.item (c.item.name) as cl and then
+						not cl.checked_items.is_empty
+					then
+						across cl.checked_items as lic loop
+							if attached {STRING_8} lic.item.data as l_item_data then
+								c.item.add_element_to_array (l_item_data)
+							end
+						end
+					elseif attached {EV_COMBO_BOX} table.item (c.item.name) as cb
+					then
+							if  attached {EV_LIST_ITEM} cb.first as l_item and then
+					   			 attached {STRING_8} l_item.data as l_value
+							then
+								c.item.set_value (l_value)
+							end
+					elseif attached {EV_TEXT_FIELD} table.item (c.item.name) as tf then
 						c.item.set_value (tf.text)
 					end
 				end
 			end
 			on_query_actions.call ([q])
 		end
+
+
+feature -- Implementation
+
+	set_template_acceptable_map (a_map: STRING_TABLE[READABLE_STRING_32]; a_lab: EV_LABEL; v: EV_VERTICAL_BOX; a_table: HASH_TABLE [EV_ANY, STRING_32]; a_value: READABLE_STRING_32)
+		local
+			l_acceptable_list: EV_COMBO_BOX
+			hb: EV_HORIZONTAL_BOX
+			l_item: EV_LIST_ITEM
+		do
+			create l_acceptable_list
+			create hb
+			hb.extend (a_lab)
+			hb.disable_item_expand (a_lab)
+			hb.set_padding_width (3)
+			hb.extend (l_acceptable_list)
+			v.extend (hb)
+			v.disable_item_expand (hb)
+			a_table.force (l_acceptable_list, a_lab.text)
+
+			from
+				a_map.start
+			until
+				a_map.after
+			loop
+				create l_item.make_with_text (a_map.item_for_iteration)
+				l_item.set_tooltip (a_map.item_for_iteration)
+				l_item.set_data (a_map.key_for_iteration)
+				if
+					a_value.is_case_insensitive_equal_general (a_map.item_for_iteration) or else
+				   	a_value.is_case_insensitive_equal_general (a_map.key_for_iteration)
+				then
+					l_acceptable_list.set_text (a_map.item_for_iteration)
+					l_acceptable_list.put_front(l_item)
+				else
+					l_acceptable_list.force (l_item)
+				end
+				a_map.forth
+			end
+		end
+
+
+	set_template_acceptable_list (a_list: LIST[READABLE_STRING_32]; a_lab: EV_LABEL; v: EV_VERTICAL_BOX; a_table: HASH_TABLE [EV_ANY, STRING_32]; a_value: READABLE_STRING_32)
+		local
+			l_acceptable_list: EV_COMBO_BOX
+			hb: EV_HORIZONTAL_BOX
+			l_item: EV_LIST_ITEM
+		do
+			create l_acceptable_list
+			create hb
+			hb.extend (a_lab)
+			hb.disable_item_expand (a_lab)
+			hb.set_padding_width (3)
+			hb.extend (l_acceptable_list)
+			v.extend (hb)
+			v.disable_item_expand (hb)
+			a_table.force (l_acceptable_list, a_lab.text)
+
+			a_list.compare_objects
+			from
+				a_list.start
+			until
+				a_list.after
+			loop
+				create l_item.make_with_text (a_list.item_for_iteration)
+				l_item.set_tooltip (a_list.item_for_iteration)
+				l_item.set_data (a_list.item_for_iteration)
+				if a_value.is_case_insensitive_equal_general (a_list.item_for_iteration)  then
+					l_acceptable_list.set_text (a_list.item_for_iteration)
+					l_acceptable_list.put_front(l_item)
+				else
+					l_acceptable_list.force (l_item)
+				end
+				a_list.forth
+			end
+		end
+
+	set_template_acceptable_map_multi (a_map: STRING_TABLE[READABLE_STRING_32]; a_lab: EV_LABEL; v: EV_VERTICAL_BOX; a_table: HASH_TABLE [EV_ANY, STRING_32]; a_array: LIST[READABLE_STRING_32])
+		local
+			l_acceptable_list: EV_CHECKABLE_LIST
+			hb: EV_HORIZONTAL_BOX
+			l_item: EV_LIST_ITEM
+		do
+			create l_acceptable_list
+			create hb
+			hb.extend (a_lab)
+			hb.disable_item_expand (a_lab)
+			hb.set_padding_width (3)
+			hb.extend (l_acceptable_list)
+			v.extend (hb)
+			v.disable_item_expand (hb)
+			a_table.force (l_acceptable_list, a_lab.text)
+			a_array.compare_objects
+
+			from
+				a_map.start
+			until
+				a_map.after
+			loop
+				create l_item.make_with_text (a_map.item_for_iteration)
+				l_item.set_tooltip (a_map.item_for_iteration)
+				l_item.set_data (a_map.key_for_iteration)
+				l_acceptable_list.force (l_item)
+				if a_array.has (a_map.item_for_iteration) then
+					l_acceptable_list.check_item (l_item)
+				end
+				a_map.forth
+			end
+		end
+
 
 invariant
 	widget_attached: widget /= Void

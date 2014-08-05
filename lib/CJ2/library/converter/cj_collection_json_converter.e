@@ -1,6 +1,5 @@
 note
 	description: "Summary description for {JSON_COLLECTION_CONVERTER}."
-	author: ""
 	date: "$Date$"
 	revision: "$Revision$"
 
@@ -50,6 +49,22 @@ feature -- Conversion
 						create Result.make_with_version (l_version)
 					else
 						create Result.make_empty
+					end
+				end
+
+				if attached {JSON_OBJECT} j.item (meta_key) as jm then
+					from
+						jm.map_representation.start
+					until
+						jm.map_representation.after
+					loop
+						if
+							attached {JSON_STRING} jm.map_representation.key_for_iteration as jk and then
+							attached {JSON_STRING} jm.map_representation.item_for_iteration as ji
+						then
+							Result.add_meta (jk.item, ji.item)
+							jm.map_representation.forth
+						end
 					end
 				end
 
@@ -105,6 +120,14 @@ feature -- Conversion
 			create l_collection.make
 			l_collection.put (json.value (o.version), version_key)
 			l_collection.put (json.value (o.href), href_key)
+
+			if
+				attached o.meta as l_meta and then
+				not l_meta.is_empty
+			then
+				l_collection.put (to_json_meta (l_meta), meta_key)
+			end
+
 			if attached o.links as o_links then
 				l_collection.put (json.value (o_links), links_key)
 			end
@@ -123,6 +146,24 @@ feature -- Conversion
 
 			create Result.make
 			Result.put (l_collection, collection_key)
+		end
+
+
+	to_json_meta (a_meta: STRING_TABLE[READABLE_STRING_32]): JSON_OBJECT
+		require
+			not_empty: not a_meta.is_empty
+		local
+			l_jo: JSON_OBJECT
+		do
+			from
+				a_meta.start
+				create Result.make
+			until
+				a_meta.after
+			loop
+				Result.put (create {JSON_STRING}.make_json (a_meta.key_for_iteration.as_string_32), create {JSON_STRING}.make_json (a_meta.item_for_iteration.as_string_32))
+				a_meta.forth
+			end
 		end
 
 feature {NONE} -- Implementation
@@ -167,7 +208,12 @@ feature {NONE} -- Implementation
 			create Result.make_json ("error")
 		end
 
+	meta_key: JSON_STRING
+		once
+			create Result.make_json ("meta")
+		end
+
 note
-	copyright: "2011-2012, Javier Velilla, Jocelyn Fiat and others"
+	copyright: "2011-2014, Javier Velilla, Jocelyn Fiat and others"
 	license: "Eiffel Forum License v2 (see http://www.eiffel.com/licensing/forum.txt)"
 end

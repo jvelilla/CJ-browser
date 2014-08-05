@@ -15,6 +15,9 @@ note
 		  
 		}
 	]"
+   EIS: "Lookup Extension", "src=https://github.com/jvelilla/collection-json/blob/jv_extensions/extensions/lookup.md", "protocol=uri"
+   EIS: "Attachment Extension", "src=https://github.com/jvelilla/collection-json/blob/jv_extensions/extensions/attachment.md", "protocol=uri"
+   EIS: "Value Types Extension", "src=https://github.com/collection-json/extensions/blob/master/value-types.md", "protocol=uri"
 
 class
 	CJ_DATA
@@ -45,11 +48,15 @@ feature -- Access
 			-- this propertie May contain
 			-- one of the following data types, STRING, NUMBER, Boolean(true,false), null
 
-feature -- Access Extension
+feature -- Attachment Extension
 
 	files: detachable STRING_TABLE[STRING]
 			-- A key, value pair of attached files
 			-- this property is optional.
+
+
+
+feature -- Lookup Extension
 
 	acceptable_values: detachable ANY
 			-- list of key, a list of value pairs, or a URL
@@ -76,6 +83,22 @@ feature -- Access Extension
 			if attached {STRING_TABLE[READABLE_STRING_32]} acceptable_values as l_val then
 				Result := l_val
 			end
+		end
+
+feature -- Value Types Extension
+
+	array : detachable LIST[READABLE_STRING_32]
+		--  An array value is defined to only contain the scalar values as defined by section 6.6.
+
+	object:  detachable TUPLE[key:READABLE_STRING_32; value:READABLE_STRING_32]
+		-- An object is a JSON object containing key value pairs where the values are restricted by section 6.6.		
+
+feature -- Reset Value Types Extension
+
+	reset_array
+			-- Reset the current elements.
+		do
+			array := Void
 		end
 
 feature -- Element Change
@@ -121,11 +144,30 @@ feature -- Element Change
 				create l_files.make(0)
 				files := l_files
 			end
---			if is_valid_base64_encoding (a_content) then
---				l_files.force (a_content, a_key)
---			else
-				l_files.force ((create {BASE64}).encoded_string (a_content), a_key)
---			end
+			l_files.force (a_content, a_key)
+		end
+
+
+	add_element_to_array (a_content: READABLE_STRING_32)
+			-- Add a file with a key `a_key' and their content `a_content'.
+			-- The content is added in BASE64 encoding, the content will be encoded if needed.
+		local
+			l_array: like array
+		do
+			l_array := array
+			if l_array = Void then
+				create {ARRAYED_LIST[READABLE_STRING_32]}l_array.make(0)
+				array := l_array
+			end
+			l_array.force (a_content)
+		end
+
+	set_object (a_key: READABLE_STRING_32; a_content: READABLE_STRING_32)
+			-- Add a pair with a key `a_key' and their content `a_content'.
+		do
+			object := [a_key, a_content]
+		ensure
+			object_set: attached object
 		end
 
 	set_acceptable_url (a_url: READABLE_STRING_32)
@@ -150,26 +192,6 @@ feature -- Element Change
 			acceptable_values := a_map
 		ensure
 			acceptable_values_set: acceptable_values = a_map
-		end
-
-
-feature {NONE} -- Base64 encode
-
-	is_valid_base64_encoding (a_string: STRING): BOOLEAN
-			-- is `a_string' base64 encoded?
-		local
-			l_encoder: BASE64
-			l_string: STRING
-			l_retry: BOOLEAN
-		do
-			if not l_retry then
-				create l_encoder
-				l_string := l_encoder.decoded_string (a_string)
-				Result := not l_encoder.has_error
-			end
-		rescue
-			l_retry := True
-			retry
 		end
 
 note

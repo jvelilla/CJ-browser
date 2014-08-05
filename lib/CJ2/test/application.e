@@ -40,6 +40,8 @@ feature -- Initialization
 			test_acceptable_list
 			print ("%Ntest acceptable map%N")
 			test_acceptable_map
+			print ("%Ntest value type array map%N")
+			test_value_type_array
 		end
 
 	initialize_converters
@@ -414,6 +416,26 @@ feature -- Initialization
 		end
 
 
+	test_value_type_array
+	    --"data" : [
+	    --  {"name" : "full-name", "value" : ""},
+	    --  {"name" : "email", "value" : ""},
+	    --  {"name" : "status", "array" : ["Open","Close","Pending","Won't Fix"]}
+	    -- ]
+		local
+			l_template: CJ_TEMPLATE
+		do
+			create l_template.make
+			l_template.add_data (new_data ("full-name", "", "Full Name"))
+			l_template.add_data (new_data ("email", "", "Email"))
+			l_template.add_data (new_data ("blog", "", "Blog"))
+			l_template.add_data (new_data_value_type_array ("status", "", new_array, "Status"))
+			if attached {JSON_VALUE} json.value (l_template) as jv then
+				print (pretty_string (jv))
+			end
+		end
+
+
 
 
 
@@ -453,6 +475,12 @@ feature {NONE} -- Implementation
 		do
 			Result := new_data (name, value, prompt)
 			Result.set_acceptable_map (a_map)
+		end
+
+	new_data_value_type_array (name: STRING; value: STRING; a_array: LIST[READABLE_STRING_32]; prompt: STRING): CJ_DATA
+		do
+			Result := new_data (name, value, prompt)
+			across a_array as c loop Result.add_element_to_array(c.item) end
 		end
 
 
@@ -508,6 +536,15 @@ feature {NONE} -- Implementation
 			Result.force ("Close", "2")
 			Result.force ("Pending","3")
 			Result.force ("Won't Fix","4")
+		end
+
+	new_array: LIST [READABLE_STRING_32]
+		do
+			create {ARRAYED_LIST[READABLE_STRING_32]}Result.make (4)
+			Result.force ("Open")
+			Result.force ("Close")
+			Result.force ("Pending")
+			Result.force ("Won't Fix")
 		end
 
 end

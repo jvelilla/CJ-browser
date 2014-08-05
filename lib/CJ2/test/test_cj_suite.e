@@ -315,6 +315,28 @@ feature -- Test routines
 			end
 		end
 
+
+	test_array_value_representation
+		local
+			l_coll : detachable CJ_COLLECTION
+		do
+			l_coll := json_to_cj ("value_type_array.json")
+			assert ("Not Void", l_coll /= Void)
+			if l_coll /= Void then
+				assert ("Expected version 1.0", l_coll.version ~ "1.0")
+				assert ("Expected href value http://example.org/friends/", l_coll.href ~ "http://example.org/friends/")
+				-- template
+				assert ("Template is not void", l_coll.template /= Void)
+				if attached {CJ_TEMPLATE } l_coll.template as l_template then
+					assert ("Expect 3 elements", l_template.data.count = 3)
+					if attached l_template.data.at (3).array as l_array then
+						assert ("Expect Open", l_array.at (1).same_string ("Open"))
+						assert ("Expect Won't Fix", l_array.at (4).same_string ("Won't Fix"))
+					end
+				end
+			end
+		end
+
 feature -- Implementation
 
 
