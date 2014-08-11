@@ -253,7 +253,7 @@ feature -- Implementation
 			create hb
 			hb.extend (a_lab)
 			hb.disable_item_expand (a_lab)
-			hb.set_padding_width (3)
+			hb.set_padding_width (6)
 			hb.extend (l_acceptable_list)
 			v.extend (hb)
 			v.disable_item_expand (hb)

@@ -27,17 +27,17 @@ feature -- Access
 
 	title: STRING_32 = "Template"
 
+	attachments: STRING_32 = "attachments"
+
 feature -- Widget	
 
 	widget: EV_CELL
 
 feature -- Primitives
 
-	list:  detachable EV_CHECKABLE_LIST
-
-	acceptable_list: detachable EV_COMBO_BOX
-
 	v: EV_VERTICAL_BOX
+
+	list:  detachable EV_CHECKABLE_LIST
 
 feature -- Change
 
@@ -50,21 +50,18 @@ feature -- Change
 		local
 			hb: EV_HORIZONTAL_BOX
 			lab, lab1: EV_LABEL
---			tf: EV_TEXT_FIELD
 			tf: EV_TEXT
 			tf_passwd: EV_PASSWORD_FIELD
 			but: EV_BUTTON
 			but_delete: detachable EV_BUTTON
 			but_add_file: EV_BUTTON
-			table: HASH_TABLE [EV_TEXT_COMPONENT, STRING_32]
+			table: HASH_TABLE [EV_ANY, STRING_32]
 			is_creation: BOOLEAN
 			is_password: BOOLEAN
 			l_file_dialog: EV_FILE_OPEN_DIALOG
 			l_item: EV_LIST_ITEM
 		do
 			create v
-			list := Void
-			acceptable_list := Void
 			v.set_border_width (3)
 			v.set_padding_width (5)
 			create table.make (tpl.data.count)
@@ -79,7 +76,13 @@ feature -- Change
 					if attached d.item.prompt as p then
 					   lab.set_text (p)
 					end
-					set_template_acceptable_map (l_map, lab)
+						-- Multivalue
+					if attached d.item.array as l_array then
+--						set_template_acceptable_map_multi (l_map, lab, v, table, l_array)
+--						d.item.reset_array
+					elseif attached d.item.value as l_value then
+						set_template_acceptable_map (l_map, lab, table, l_value)
+					end
 				else
 					if attached d.item.prompt as p then
 						lab.set_text (p)
@@ -152,7 +155,7 @@ feature -- Change
 			-- FIXME
 		end
 
-	on_post (coll: CJ_COLLECTION; tpl: CJ_TEMPLATE; table: HASH_TABLE [EV_TEXT_COMPONENT, STRING_32]; is_creation: BOOLEAN)
+	on_post (coll: CJ_COLLECTION; tpl: CJ_TEMPLATE; table: HASH_TABLE [EV_ANY, STRING_32]; is_creation: BOOLEAN)
 		local
 			ctx: HTTP_CLIENT_REQUEST_CONTEXT
 			l_href: STRING_8
@@ -163,29 +166,23 @@ feature -- Change
 			across
 				tpl.data as c
 			loop
-				if attached table.item (c.item.name) as tf then
+				if attached {EV_TEXT} table.item (c.item.name) as tf then
 					c.item.set_value (tf.text)
-				end
-				if attached c.item.files as l_files then
-					c.item.initilize_attachment
-					if attached list as l_list and then not l_list.checked_items.is_empty then
-						across l_list.checked_items as lc loop
-							c.item.add_attachment (lc.item.tooltip, file_content (lc.item.text))
-						end
+				elseif attached {EV_PASSWORD_FIELD} table.item (c.item.name) as tp then
+					c.item.set_value (tp.text)
+				elseif attached {EV_COMBO_BOX} table.item (c.item.name) as cb then
+					if
+						attached {EV_LIST_ITEM} cb.selected_item as l_item and then
+						attached {STRING_8} l_item.data as l_value
+					then
+						c.item.set_value (l_value)
 					end
-				end
-				if attached c.item.acceptable_map as l_map then
-					if attached acceptable_list as ll_list then
-						if attached ll_list.selected_item as l_item then
-							from
-								l_map.start
-							until
-								l_map.after
-							loop
-								if l_item.text.is_case_insensitive_equal_general (l_map.item_for_iteration) then
-									c.item.set_value (l_map.key_for_iteration.as_string_32)
-								end
-								l_map.forth
+				else
+					if attached c.item.files as l_files then
+						c.item.initilize_attachment
+						if attached {EV_CHECKABLE_LIST} table.at (attachments) as l_list and then not l_list.checked_items.is_empty then
+							across l_list.checked_items as lc loop
+								c.item.add_attachment (lc.item.tooltip, file_content (lc.item.text))
 							end
 						end
 					end
@@ -200,13 +197,13 @@ feature -- Change
 				resp := cj_client.create_with_template (l_href, tpl, Void)
 			end
 			create dlg.make_with_text ("Result")
-			list := Void
+--			list := Void
 			dlg.set_text (resp.http_response)
 			dlg.show
 --			dlg.focus_out_actions.extend (agent dlg.destroy_and_exit_if_last)
 		end
 
-	on_delete (coll: CJ_COLLECTION; tpl: CJ_TEMPLATE; table: HASH_TABLE [EV_TEXT_COMPONENT, STRING_32])
+	on_delete (coll: CJ_COLLECTION; tpl: CJ_TEMPLATE; table: HASH_TABLE [EV_ANY, STRING_32])
 		local
 			ctx: HTTP_CLIENT_REQUEST_CONTEXT
 			l_href: STRING_8
@@ -217,7 +214,7 @@ feature -- Change
 			across
 				tpl.data as c
 			loop
-				if attached table.item (c.item.name) as tf then
+				if attached {EV_TEXT_FIELD} table.item (c.item.name) as tf then
 					c.item.set_value (tf.text)
 				end
 			end
@@ -233,14 +230,13 @@ feature -- Change
 			dlg.show
 		end
 
-	on_add_file (coll: CJ_COLLECTION; tpl: CJ_TEMPLATE; table: HASH_TABLE [EV_TEXT_COMPONENT, STRING_32])
+	on_add_file (coll: CJ_COLLECTION; tpl: CJ_TEMPLATE; a_table: HASH_TABLE [EV_ANY, STRING_32])
 		local
 			l_href: STRING_8
 			l_dlg: EV_FILE_OPEN_DIALOG
 			l_selected_file: STRING
 			l_name: STRING
 			l_content: STRING
-			l_list:  like list
 			l_item: EV_LIST_ITEM
 			hb: EV_HORIZONTAL_BOX
 		do
@@ -248,14 +244,12 @@ feature -- Change
 			l_dlg.show_modal_to_window (create {EV_WINDOW}.default_create)
 			l_selected_file := l_dlg.file_name
 			l_name := l_dlg.file_title
-			l_list := list
-			if l_list /= Void then
+			if attached {EV_CHECKABLE_LIST} a_table.at (attachments) as l_list then
 				create l_item.make_with_text (l_selected_file)
 				l_item.set_tooltip (l_name)
 				l_list.force (l_item)
 				l_list.check_item (l_item)
 			end
-
 		end
 
 	file_content (a_fn: STRING): STRING
@@ -294,24 +288,22 @@ feature -- Change
 
 feature -- Template Helpers
 
-	set_template_attachment (coll: CJ_COLLECTION; tpl: CJ_TEMPLATE; a_files: STRING_TABLE[STRING]; a_table: HASH_TABLE [EV_TEXT_COMPONENT, STRING_32])
+	set_template_attachment (coll: CJ_COLLECTION; tpl: CJ_TEMPLATE; a_files: STRING_TABLE[STRING]; a_table: HASH_TABLE [EV_ANY, STRING_32])
 		local
-			l_list: like list
+			l_list: EV_CHECKABLE_LIST
 			hb: EV_HORIZONTAL_BOX
 			l_item: EV_LIST_ITEM
 			but_add_file: EV_BUTTON
 		do
-			l_list := list
-			if l_list = Void then
-				create l_list
-				list := l_list
-				l_list.enable_multiple_selection
-				create hb
-				hb.set_padding_width (6)
-				hb.extend (l_list)
-				v.extend (hb)
-				v.disable_item_expand (hb)
-			end
+			create l_list
+			l_list.enable_multiple_selection
+			create hb
+			hb.set_padding_width (6)
+			hb.extend (l_list)
+			v.extend (hb)
+			v.disable_item_expand (hb)
+			a_table.force (l_list, attachments)
+
 			from
 				a_files.start
 			until
@@ -333,24 +325,21 @@ feature -- Template Helpers
 			v.disable_item_expand (hb)
 		end
 
-	set_template_acceptable_map (a_map: STRING_TABLE[READABLE_STRING_32]; a_lab: EV_LABEL)
+	set_template_acceptable_map (a_map: STRING_TABLE[READABLE_STRING_32]; a_lab: EV_LABEL; a_table: HASH_TABLE [EV_ANY, STRING_32]; a_value: READABLE_STRING_32)
 		local
-			l_acceptable_list: like acceptable_list
+			l_acceptable_list: EV_COMBO_BOX
 			hb: EV_HORIZONTAL_BOX
 			l_item: EV_LIST_ITEM
 		do
-			l_acceptable_list := acceptable_list
-			if l_acceptable_list = Void then
-				create l_acceptable_list
-				acceptable_list := l_acceptable_list
-				create hb
-				hb.extend (a_lab)
-				hb.disable_item_expand (a_lab)
-				hb.set_padding_width (3)
-				hb.extend (l_acceptable_list)
-				v.extend (hb)
-				v.disable_item_expand (hb)
-			end
+			create l_acceptable_list
+			create hb
+			hb.extend (a_lab)
+			hb.disable_item_expand (a_lab)
+			hb.set_padding_width (3)
+			hb.extend (l_acceptable_list)
+			v.extend (hb)
+			v.disable_item_expand (hb)
+			a_table.force (l_acceptable_list, a_lab.text.as_lower)
 
 			from
 				a_map.start
@@ -359,11 +348,19 @@ feature -- Template Helpers
 			loop
 				create l_item.make_with_text (a_map.item_for_iteration)
 				l_item.set_tooltip (a_map.item_for_iteration)
-				l_acceptable_list.force (l_item)
+				l_item.set_data (a_map.key_for_iteration)
+				if
+					a_value.is_case_insensitive_equal_general (a_map.item_for_iteration) or else
+				   	a_value.is_case_insensitive_equal_general (a_map.key_for_iteration)
+				then
+					l_acceptable_list.set_text (a_map.item_for_iteration)
+					l_acceptable_list.put_front(l_item)
+				else
+					l_acceptable_list.force (l_item)
+				end
 				a_map.forth
 			end
 		end
-
 invariant
 	widget_attached: widget /= Void
 
