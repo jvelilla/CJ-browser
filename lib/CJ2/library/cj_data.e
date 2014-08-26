@@ -162,6 +162,12 @@ feature -- Element Change
 			l_array.force (a_content)
 		end
 
+	new_empty_array
+			-- Build an empty array
+		do
+			create {ARRAYED_LIST[READABLE_STRING_32]}array.make(0)
+		end
+
 	set_object (a_key: READABLE_STRING_32; a_content: READABLE_STRING_32)
 			-- Add a pair with a key `a_key' and their content `a_content'.
 		do

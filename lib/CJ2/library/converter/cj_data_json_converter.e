@@ -76,9 +76,13 @@ feature -- Conversion
 				end
 			end
 			if attached {JSON_ARRAY} j.item (array_key) as l_array then
-				across l_array as c  loop
-					if attached {JSON_STRING} c.item as jo  then
-						Result.add_element_to_array (jo.item)
+				if l_array.count = 0 then
+					Result.new_empty_array
+  				else
+	  				across l_array as c  loop
+						if attached {JSON_STRING} c.item as jo  then
+							Result.add_element_to_array (jo.item)
+						end
 					end
 				end
 			end

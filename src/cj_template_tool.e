@@ -78,8 +78,8 @@ feature -- Change
 					end
 						-- Multivalue
 					if attached d.item.array as l_array then
---						set_template_acceptable_map_multi (l_map, lab, v, table, l_array)
---						d.item.reset_array
+						set_template_acceptable_map_multi (l_map, lab, table, l_array)
+						d.item.reset_array
 					elseif attached d.item.value as l_value then
 						set_template_acceptable_map (l_map, lab, table, l_value)
 					end
@@ -170,6 +170,14 @@ feature -- Change
 					c.item.set_value (tf.text)
 				elseif attached {EV_PASSWORD_FIELD} table.item (c.item.name) as tp then
 					c.item.set_value (tp.text)
+				elseif	attached {EV_CHECKABLE_LIST} table.item (c.item.name) as cl and then
+						not cl.checked_items.is_empty
+				then
+						across cl.checked_items as lic loop
+							if attached {STRING_8} lic.item.data as l_item_data then
+								c.item.add_element_to_array (l_item_data)
+							end
+						end
 				elseif attached {EV_COMBO_BOX} table.item (c.item.name) as cb then
 					if
 						attached {EV_LIST_ITEM} cb.selected_item as l_item and then
@@ -357,6 +365,38 @@ feature -- Template Helpers
 					l_acceptable_list.put_front(l_item)
 				else
 					l_acceptable_list.force (l_item)
+				end
+				a_map.forth
+			end
+		end
+
+	set_template_acceptable_map_multi (a_map: STRING_TABLE[READABLE_STRING_32]; a_lab: EV_LABEL; a_table: HASH_TABLE [EV_ANY, STRING_32]; a_array: LIST[READABLE_STRING_32])
+		local
+			l_acceptable_list: EV_CHECKABLE_LIST
+			hb: EV_HORIZONTAL_BOX
+			l_item: EV_LIST_ITEM
+		do
+			create l_acceptable_list
+			create hb
+			hb.extend (a_lab)
+			hb.disable_item_expand (a_lab)
+			hb.set_padding_width (6)
+			hb.extend (l_acceptable_list)
+			v.extend (hb)
+			a_table.force (l_acceptable_list, a_lab.text)
+			a_array.compare_objects
+
+			from
+				a_map.start
+			until
+				a_map.after
+			loop
+				create l_item.make_with_text (a_map.item_for_iteration)
+				l_item.set_tooltip (a_map.item_for_iteration)
+				l_item.set_data (a_map.key_for_iteration)
+				l_acceptable_list.force (l_item)
+				if a_array.has (a_map.item_for_iteration) or else a_array.has (a_map.key_for_iteration.as_string_32) then
+					l_acceptable_list.check_item (l_item)
 				end
 				a_map.forth
 			end
